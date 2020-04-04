@@ -69,6 +69,7 @@ public  class HdfsHelper {
             if (StringUtils.isBlank(proxyUser)) {
                 fileSystem = FileSystem.get(conf);
             }else {
+                LOG.info("即将访问HDFS用户为:{}",proxyUser);
                 fileSystem = getFileSystem(conf, proxyUser);
             }
         } catch (IOException e) {
