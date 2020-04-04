@@ -3,8 +3,11 @@
 // (powered by Fernflower decompiler)
 //
 
-package hadoop.mapred;
+package org.apache.hadoop.mapred;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import org.apache.hadoop.classification.InterfaceAudience.Public;
 import org.apache.hadoop.classification.InterfaceStability.Stable;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -14,16 +17,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
-import org.apache.hadoop.mapred.FileOutputFormat;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.RecordWriter;
-import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.util.ReflectionUtils;
-
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 @Public
 @Stable
@@ -37,14 +32,14 @@ public class TextOutputFormat<K, V> extends FileOutputFormat<K, V> {
         if (!isCompressed) {
             Path file = FileOutputFormat.getTaskOutputPath(job, name);
             FSDataOutputStream fileOut = ignored.create(file, progress);
-            return new org.apache.hadoop.mapred.TextOutputFormat.LineRecordWriter(fileOut, keyValueSeparator);
+            return new TextOutputFormat.LineRecordWriter(fileOut, keyValueSeparator);
         } else {
             Class<? extends CompressionCodec> codecClass = getOutputCompressorClass(job, GzipCodec.class);
             CompressionCodec codec = (CompressionCodec)ReflectionUtils.newInstance(codecClass, job);
             Path file = FileOutputFormat.getTaskOutputPath(job, name + codec.getDefaultExtension());
             FileSystem fs = file.getFileSystem(job);
             FSDataOutputStream fileOut = fs.create(file, progress);
-            return new org.apache.hadoop.mapred.TextOutputFormat.LineRecordWriter(new DataOutputStream(codec.createOutputStream(fileOut)), keyValueSeparator);
+            return new TextOutputFormat.LineRecordWriter(new DataOutputStream(codec.createOutputStream(fileOut)), keyValueSeparator);
         }
     }
 

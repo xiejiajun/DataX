@@ -3,22 +3,31 @@
 // (powered by Fernflower decompiler)
 //
 
-package hadoop.hive.ql.io.orc;
+package org.apache.hadoop.hive.ql.io.orc;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Properties;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.io.AcidOutputFormat;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.io.RecordUpdater;
 import org.apache.hadoop.hive.ql.io.StatsProvidingRecordWriter;
-import org.apache.hadoop.hive.ql.io.orc.*;
+import org.apache.hadoop.hive.ql.io.AcidOutputFormat.Options;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile.EncodingStrategy;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile.OrcTableProperties;
 import org.apache.hadoop.hive.ql.io.orc.OrcFile.WriterOptions;
 import org.apache.hadoop.hive.ql.io.orc.OrcRecordUpdater.KeyIndexBuilder;
 import org.apache.hadoop.hive.ql.io.orc.OrcSerde.OrcSerdeRow;
 import org.apache.hadoop.hive.serde2.SerDeStats;
-import org.apache.hadoop.hive.serde2.objectinspector.*;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -28,12 +37,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.util.Progressable;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Properties;
 
 public class OrcOutputFormat extends FileOutputFormat<NullWritable, OrcSerdeRow> implements AcidOutputFormat<NullWritable, OrcSerdeRow> {
     public OrcOutputFormat() {
@@ -84,15 +87,15 @@ public class OrcOutputFormat extends FileOutputFormat<NullWritable, OrcSerdeRow>
     public RecordWriter<NullWritable, OrcSerdeRow> getRecordWriter(FileSystem fileSystem, JobConf conf, String name, Progressable reporter) throws IOException {
         WriterOptions writerOptions = this.getOptions(conf, (Properties)null);
         writerOptions.fileSystem(fileSystem);
-        return new org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat.OrcRecordWriter(new Path(name), writerOptions);
+        return new OrcOutputFormat.OrcRecordWriter(new Path(name), writerOptions);
     }
 
     public StatsProvidingRecordWriter getHiveRecordWriter(JobConf conf, Path path, Class<? extends Writable> valueClass, boolean isCompressed, Properties tableProperties, Progressable reporter) throws IOException {
-        return new org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat.OrcRecordWriter(path, this.getOptions(conf, tableProperties));
+        return new OrcOutputFormat.OrcRecordWriter(path, this.getOptions(conf, tableProperties));
     }
 
     public RecordUpdater getRecordUpdater(Path path, Options options) throws IOException {
-        return (RecordUpdater)(options.getDummyStream() != null ? new org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat.DummyOrcRecordUpdater(path, options) : new OrcRecordUpdater(path, options));
+        return (RecordUpdater)(options.getDummyStream() != null ? new OrcOutputFormat.DummyOrcRecordUpdater(path, options) : new OrcRecordUpdater(path, options));
     }
 
     public org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter getRawRecordWriter(Path path, Options options) throws IOException {
