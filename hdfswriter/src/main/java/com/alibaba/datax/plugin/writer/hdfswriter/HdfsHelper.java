@@ -25,6 +25,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -44,6 +45,7 @@ public  class HdfsHelper {
     public void getFileSystem(String defaultFS, Configuration taskConfig){
         hadoopConf = new org.apache.hadoop.conf.Configuration();
 
+        String proxyUser = taskConfig.getString(Key.HADOOP_PROXY_USER);
         Configuration hadoopSiteParams = taskConfig.getConfiguration(Key.HADOOP_CONFIG);
         JSONObject hadoopSiteParamsAsJsonObject = JSON.parseObject(taskConfig.getString(Key.HADOOP_CONFIG));
         if (null != hadoopSiteParams) {
@@ -64,7 +66,11 @@ public  class HdfsHelper {
         this.kerberosAuthentication(this.kerberosPrincipal, this.kerberosKeytabFilePath);
         conf = new JobConf(hadoopConf);
         try {
-            fileSystem = FileSystem.get(conf);
+            if (StringUtils.isBlank(proxyUser)) {
+                fileSystem = FileSystem.get(conf);
+            }else {
+                fileSystem = getFileSystem(conf, proxyUser);
+            }
         } catch (IOException e) {
             String message = String.format("获取FileSystem时发生网络IO异常,请检查您的网络是否正常!HDFS地址：[%s]",
                     "message:defaultFS =" + defaultFS);
@@ -83,6 +89,17 @@ public  class HdfsHelper {
             LOG.error(message);
             throw DataXException.asDataXException(HdfsWriterErrorCode.CONNECT_HDFS_IO_ERROR, message);
         }
+    }
+
+    private FileSystem getFileSystem(org.apache.hadoop.conf.Configuration conf,String proxyUser) throws IOException, InterruptedException {
+        String ticketCachePath = conf.get("hadoop.security.kerberos.ticket.cache.path");
+        UserGroupInformation ugi = UserGroupInformation.getBestUGI(ticketCachePath, proxyUser);
+        return (FileSystem)ugi.doAs(new PrivilegedExceptionAction<FileSystem>() {
+            @Override
+            public FileSystem run() throws IOException {
+                return FileSystem.get(conf);
+            }
+        });
     }
 
     private void kerberosAuthentication(String kerberosPrincipal, String kerberosKeytabFilePath){
