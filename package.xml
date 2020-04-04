@@ -357,5 +357,12 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>emrfswriter/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

@@ -1,0 +1,6 @@
+{
+    "name": "emrfswriter",
+    "class": "com.alibaba.datax.plugin.writer.emrfswriter.EmrfsWriter",
+    "description": "useScene: prod. mechanism: via FileSystem connect EmrFs write data concurrent.",
+    "developer": "xiejiajun"
+}
